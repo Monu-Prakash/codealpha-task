@@ -1,0 +1,634 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Mini Social Media App</title>
+  <style>
+    body {
+      font-family: 'Segoe UI', Arial, sans-serif;
+      background: linear-gradient(120deg, #e0e7ff 0%, #f4f6fb 100%);
+      margin: 0;
+      padding: 0;
+      min-height: 100vh;
+    }
+    h1, h2 {
+      text-align: center;
+      color: #222;
+      letter-spacing: 1px;
+    }
+    .container {
+      max-width: 650px;
+      margin: 0 auto;
+      padding-bottom: 40px;
+    }
+    .card {
+      background: #fff;
+      max-width: 520px;
+      margin: 24px auto 0 auto;
+      padding: 24px 20px;
+      border-radius: 16px;
+      box-shadow: 0 4px 16px rgba(0,0,0,0.09);
+      display: flex;
+      flex-direction: column;
+      gap: 14px;
+      transition: box-shadow 0.2s;
+    }
+    .card:focus-within, .card:hover {
+      box-shadow: 0 8px 24px rgba(0,0,0,0.13);
+    }
+    input, textarea, select {
+      padding: 12px;
+      border: 1.5px solid #c7d2fe;
+      border-radius: 8px;
+      font-size: 1em;
+      resize: none;
+      outline: none;
+      transition: border 0.2s;
+      background: #f8fafc;
+    }
+    input:focus, textarea:focus, select:focus {
+      border: 1.5px solid #6366f1;
+      background: #fff;
+    }
+    button {
+      background: linear-gradient(90deg, #6366f1 60%, #60a5fa 100%);
+      color: #fff;
+      border: none;
+      border-radius: 8px;
+      padding: 10px 18px;
+      font-size: 1em;
+      font-weight: 500;
+      cursor: pointer;
+      transition: background 0.2s, box-shadow 0.2s;
+      box-shadow: 0 2px 8px rgba(99,102,241,0.07);
+    }
+    button:hover {
+      background: linear-gradient(90deg, #4f46e5 60%, #2563eb 100%);
+      box-shadow: 0 4px 16px rgba(99,102,241,0.13);
+    }
+    #posts {
+      max-width: 650px;
+      margin: 0 auto 40px auto;
+    }
+    .post {
+      background: #fff;
+      margin: 20px 0;
+      padding: 18px 18px 12px 18px;
+      border-radius: 14px;
+      box-shadow: 0 2px 8px rgba(0,0,0,0.07);
+      position: relative;
+      transition: box-shadow 0.2s;
+    }
+    .post:hover {
+      box-shadow: 0 6px 20px rgba(99,102,241,0.09);
+    }
+    .post .author {
+      font-weight: bold;
+      color: #6366f1;
+      cursor: pointer;
+      font-size: 1.08em;
+      margin-right: 6px;
+      transition: text-decoration 0.2s;
+    }
+    .post .author:hover {
+      text-decoration: underline;
+    }
+    .post .timestamp {
+      color: #888;
+      font-size: 0.93em;
+      margin-left: 8px;
+    }
+    .post .content {
+      margin: 12px 0 0 0;
+      white-space: pre-wrap;
+      font-size: 1.08em;
+      color: #222;
+    }
+    .like-btn, .follow-btn {
+      background: #f1f5f9;
+      color: #333;
+      border: none;
+      border-radius: 6px;
+      padding: 6px 16px;
+      font-size: 1em;
+      margin-right: 10px;
+      cursor: pointer;
+      transition: background 0.2s, color 0.2s;
+      font-weight: 500;
+    }
+    .like-btn.liked {
+      background: #fee2e2;
+      color: #dc2626;
+    }
+    .follow-btn.following {
+      background: #dbeafe;
+      color: #2563eb;
+    }
+    .comments {
+      margin-top: 16px;
+      padding-left: 12px;
+      border-left: 2.5px solid #e0e7ff;
+      background: #f8fafc;
+      border-radius: 0 0 8px 8px;
+      padding-bottom: 8px;
+    }
+    .comment {
+      margin-bottom: 10px;
+      font-size: 1em;
+      color: #444;
+    }
+    .comment .author {
+      color: #6366f1;
+      font-weight: bold;
+      margin-right: 4px;
+      cursor: pointer;
+    }
+    .comment .author:hover {
+      text-decoration: underline;
+    }
+    .profile-modal {
+      display: none;
+      position: fixed;
+      top: 0; left: 0; right: 0; bottom: 0;
+      background: rgba(0,0,0,0.18);
+      z-index: 1000;
+      justify-content: center;
+      align-items: center;
+      animation: fadeIn 0.2s;
+    }
+    @keyframes fadeIn {
+      from { opacity: 0; }
+      to { opacity: 1; }
+    }
+    .profile-content {
+      background: #fff;
+      padding: 32px 38px 24px 38px;
+      border-radius: 16px;
+      min-width: 320px;
+      box-shadow: 0 8px 32px rgba(99,102,241,0.13);
+      text-align: center;
+      position: relative;
+      animation: popIn 0.2s;
+    }
+    @keyframes popIn {
+      from { transform: scale(0.95);}
+      to { transform: scale(1);}
+    }
+    .profile-content h3 {
+      margin-top: 0;
+      color: #6366f1;
+      font-size: 1.4em;
+      margin-bottom: 10px;
+    }
+    .close-profile {
+      position: absolute;
+      top: 10px;
+      right: 16px;
+      background: none;
+      border: none;
+      font-size: 1.5em;
+      color: #888;
+      cursor: pointer;
+      transition: color 0.2s;
+    }
+    .close-profile:hover {
+      color: #dc2626;
+    }
+    .followers-list {
+      margin: 10px 0 0 0;
+      font-size: 0.98em;
+      color: #555;
+      word-break: break-all;
+    }
+    .profile-stats {
+      margin: 10px 0 10px 0;
+      font-size: 1.08em;
+      color: #333;
+      display: flex;
+      justify-content: center;
+      gap: 30px;
+    }
+    .profile-stats span {
+      background: #f1f5f9;
+      border-radius: 8px;
+      padding: 6px 14px;
+      font-weight: 500;
+    }
+    .profile-content .follow-btn {
+      margin-top: 16px;
+      width: 120px;
+    }
+    .empty {
+      text-align: center;
+      color: #aaa;
+      font-size: 1.1em;
+      margin: 30px 0;
+    }
+    .user-quick {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 10px;
+      justify-content: center;
+      margin-bottom: 10px;
+    }
+    .user-quick button {
+      background: #f1f5f9;
+      color: #6366f1;
+      border: 1.5px solid #c7d2fe;
+      border-radius: 8px;
+      padding: 7px 16px;
+      font-size: 1em;
+      font-weight: 500;
+      cursor: pointer;
+      transition: background 0.2s, color 0.2s, border 0.2s;
+      box-shadow: none;
+    }
+    .user-quick button:hover {
+      background: #6366f1;
+      color: #fff;
+      border: 1.5px solid #6366f1;
+    }
+    .profile-btn {
+      background: #fff;
+      color: #6366f1;
+      border: 1.5px solid #6366f1;
+      border-radius: 8px;
+      padding: 7px 16px;
+      font-size: 1em;
+      font-weight: 500;
+      cursor: pointer;
+      margin-left: 10px;
+      transition: background 0.2s, color 0.2s, border 0.2s;
+      box-shadow: none;
+    }
+    .profile-btn:hover {
+      background: #6366f1;
+      color: #fff;
+    }
+    /* Responsive */
+    @media (max-width: 700px) {
+      .container, #posts, .card { max-width: 98vw; }
+      .profile-content { min-width: 90vw; }
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <h1>🌐 Mini Social Media App</h1>
+
+    <!-- Quick user switch -->
+    <div class="user-quick" id="userQuick"></div>
+
+    <!-- User Login / Register -->
+    <div class="card">
+      <div style="display:flex;gap:10px;align-items:center;">
+        <input id="username" placeholder="Enter username" autocomplete="username" style="flex:1;" />
+        <select id="userSelect" style="flex:1;">
+          <option value="">Select user...</option>
+        </select>
+        <button onclick="createUser()">Login</button>
+        <button class="profile-btn" onclick="showProfile(getCurrentUser())" id="profileBtn" style="display:none;">Profile</button>
+      </div>
+      <div id="currentUser"></div>
+    </div>
+
+    <!-- Post creation -->
+    <div class="card">
+      <textarea id="postContent" placeholder="Write something..." rows="3"></textarea>
+      <button onclick="createPost()">Post</button>
+    </div>
+
+    <h2>📌 All Posts</h2>
+    <div id="posts"></div>
+  </div>
+
+  <!-- Profile Modal -->
+  <div class="profile-modal" id="profileModal">
+    <div class="profile-content" id="profileContent">
+      <button class="close-profile" onclick="closeProfile()">&times;</button>
+      <!-- Profile info will be injected here -->
+    </div>
+  </div>
+
+  <script>
+    // --- Data helpers ---
+    function getUsers() {
+      return JSON.parse(localStorage.getItem('miniapp_users') || '{}');
+    }
+    function setUsers(users) {
+      localStorage.setItem('miniapp_users', JSON.stringify(users));
+    }
+    function getPosts() {
+      return JSON.parse(localStorage.getItem('miniapp_posts') || '[]');
+    }
+    function setPosts(posts) {
+      localStorage.setItem('miniapp_posts', JSON.stringify(posts));
+    }
+    function getCurrentUser() {
+      return localStorage.getItem('miniapp_user');
+    }
+    function setCurrentUser(username) {
+      localStorage.setItem('miniapp_user', username);
+    }
+
+    // --- User login/register ---
+    function createUser(fromQuick) {
+      let username = '';
+      if (fromQuick) {
+        username = fromQuick;
+        document.getElementById('username').value = username;
+        document.getElementById('userSelect').value = username;
+      } else if (document.getElementById('userSelect').value) {
+        username = document.getElementById('userSelect').value;
+        document.getElementById('username').value = username;
+      } else {
+        username = document.getElementById('username').value.trim();
+      }
+      if (!username) {
+        alert('Please enter or select a username.');
+        return;
+      }
+      let users = getUsers();
+      if (!users[username]) {
+        users[username] = { followers: [], following: [] };
+        setUsers(users);
+      }
+      setCurrentUser(username);
+      renderCurrentUser();
+      renderPosts();
+      renderUserQuick();
+      renderUserSelect();
+      renderProfileBtn();
+      showToast('Logged in as ' + username, 'success');
+    }
+
+    function renderCurrentUser() {
+      const user = getCurrentUser();
+      document.getElementById('currentUser').innerHTML = user ?
+        `<b>Logged in as:</b> <span style="color:#6366f1">${escapeHTML(user)}</span>` : '';
+      renderProfileBtn();
+    }
+
+    function renderProfileBtn() {
+      const user = getCurrentUser();
+      const btn = document.getElementById('profileBtn');
+      if (user) {
+        btn.style.display = '';
+      } else {
+        btn.style.display = 'none';
+      }
+    }
+
+    // --- Posts ---
+    function createPost() {
+      const user = getCurrentUser();
+      if (!user) {
+        alert('Please login first.');
+        return;
+      }
+      const content = document.getElementById('postContent').value.trim();
+      if (!content) {
+        alert('Post cannot be empty.');
+        return;
+      }
+      const posts = getPosts();
+      posts.unshift({
+        id: Date.now() + Math.random().toString(36).slice(2),
+        author: user,
+        content: content,
+        timestamp: new Date().toISOString(),
+        likes: [],
+        comments: []
+      });
+      setPosts(posts);
+      document.getElementById('postContent').value = '';
+      renderPosts();
+      showToast('Post created!', 'success');
+    }
+
+    // --- Like system ---
+    function toggleLike(postId) {
+      const user = getCurrentUser();
+      if (!user) return alert('Please login first.');
+      const posts = getPosts();
+      const post = posts.find(p => p.id === postId);
+      if (!post) return;
+      const idx = post.likes.indexOf(user);
+      if (idx === -1) post.likes.push(user);
+      else post.likes.splice(idx, 1);
+      setPosts(posts);
+      renderPosts();
+    }
+
+    // --- Comments ---
+    function addComment(postId, inputId) {
+      const user = getCurrentUser();
+      if (!user) return alert('Please login first.');
+      const input = document.getElementById(inputId);
+      const text = input.value.trim();
+      if (!text) return;
+      const posts = getPosts();
+      const post = posts.find(p => p.id === postId);
+      if (!post) return;
+      post.comments.push({
+        author: user,
+        text: text,
+        timestamp: new Date().toISOString()
+      });
+      setPosts(posts);
+      renderPosts();
+      showToast('Comment added!', 'success');
+    }
+
+    // --- Follow system ---
+    function toggleFollow(username) {
+      const user = getCurrentUser();
+      if (!user) return alert('Please login first.');
+      if (user === username) return;
+      let users = getUsers();
+      if (!users[username]) return;
+      const isFollowing = users[user].following.includes(username);
+      if (isFollowing) {
+        users[user].following = users[user].following.filter(u => u !== username);
+        users[username].followers = users[username].followers.filter(u => u !== user);
+      } else {
+        users[user].following.push(username);
+        users[username].followers.push(user);
+      }
+      setUsers(users);
+      renderPosts();
+      showProfile(username);
+    }
+
+    // --- Profile Modal ---
+    function showProfile(username) {
+      if (!username) {
+        showToast('No user selected!', 'error');
+        return;
+      }
+      const users = getUsers();
+      const user = users[username];
+      if (!user) return;
+      const current = getCurrentUser();
+      const isFollowing = current && users[current].following.includes(username);
+      document.getElementById('profileContent').innerHTML = `
+        <button class="close-profile" onclick="closeProfile()">&times;</button>
+        <h3>@${escapeHTML(username)}</h3>
+        <div class="profile-stats">
+          <span>Followers: ${user.followers.length}</span>
+          <span>Following: ${user.following.length}</span>
+        </div>
+        <div class="followers-list">
+          <b>Followers:</b> ${user.followers.length ? user.followers.map(escapeHTML).join(', ') : 'None'}
+        </div>
+        <div class="followers-list">
+          <b>Following:</b> ${user.following.length ? user.following.map(escapeHTML).join(', ') : 'None'}
+        </div>
+        ${current && current !== username ? `
+          <button class="follow-btn${isFollowing ? ' following' : ''}" onclick="toggleFollow('${username}')">
+            ${isFollowing ? 'Unfollow' : 'Follow'}
+          </button>
+        ` : ''}
+      `;
+      document.getElementById('profileModal').style.display = 'flex';
+    }
+    function closeProfile() {
+      document.getElementById('profileModal').style.display = 'none';
+    }
+
+    // --- Render posts ---
+    function renderPosts() {
+      const posts = getPosts();
+      const user = getCurrentUser();
+      const users = getUsers();
+      const postsDiv = document.getElementById('posts');
+      postsDiv.innerHTML = '';
+      if (posts.length === 0) {
+        postsDiv.innerHTML = '<div class="empty">No posts yet. Be the first to post!</div>';
+        return;
+      }
+      posts.forEach(post => {
+        const liked = user && post.likes.includes(user);
+        const postDiv = document.createElement('div');
+        postDiv.className = 'post';
+        postDiv.innerHTML = `
+          <span class="author" onclick="showProfile('${escapeHTML(post.author)}')">${escapeHTML(post.author)}</span>
+          <span class="timestamp">${formatTime(post.timestamp)}</span>
+          <button class="like-btn${liked ? ' liked' : ''}" onclick="toggleLike('${post.id}')">
+            ♥ ${post.likes.length}
+          </button>
+          <div class="content">${escapeHTML(post.content)}</div>
+          <div class="comments">
+            <b>Comments:</b>
+            ${post.comments.length === 0 ? '<span style="color:#aaa;"> No comments yet.</span>' : ''}
+            ${post.comments.map(c => `
+              <div class="comment">
+                <span class="author" onclick="showProfile('${escapeHTML(c.author)}')">${escapeHTML(c.author)}</span>
+                <span class="timestamp">${formatTime(c.timestamp)}</span>:
+                ${escapeHTML(c.text)}
+              </div>
+            `).join('')}
+            <div style="margin-top:8px;">
+              <input id="comment-${post.id}" placeholder="Add a comment..." style="width:68%;" />
+              <button onclick="addComment('${post.id}','comment-${post.id}')">Comment</button>
+            </div>
+          </div>
+        `;
+        postsDiv.appendChild(postDiv);
+      });
+    }
+
+    // --- Escape HTML ---
+    function escapeHTML(str) {
+      return String(str).replace(/[&<>"']/g, function(m) {
+        return ({
+          '&': '&amp;',
+          '<': '&lt;',
+          '>': '&gt;',
+          '"': '&quot;',
+          "'": '&#39;'
+        })[m];
+      });
+    }
+
+    // --- Format timestamp ---
+    function formatTime(iso) {
+      const d = new Date(iso);
+      return d.toLocaleString();
+    }
+
+    // --- Toast notification ---
+    function showToast(msg, type) {
+      let toast = document.createElement('div');
+      toast.textContent = msg;
+      toast.style.position = 'fixed';
+      toast.style.bottom = '30px';
+      toast.style.left = '50%';
+      toast.style.transform = 'translateX(-50%)';
+      toast.style.background = type === 'success' ? '#6366f1' : '#dc2626';
+      toast.style.color = '#fff';
+      toast.style.padding = '12px 28px';
+      toast.style.borderRadius = '8px';
+      toast.style.fontSize = '1.08em';
+      toast.style.boxShadow = '0 2px 12px rgba(99,102,241,0.13)';
+      toast.style.zIndex = 2000;
+      toast.style.opacity = '0.97';
+      toast.style.transition = 'opacity 0.3s';
+      document.body.appendChild(toast);
+      setTimeout(() => { toast.style.opacity = '0'; }, 1600);
+      setTimeout(() => { toast.remove(); }, 2000);
+    }
+
+    // --- User quick switch and select ---
+    function renderUserQuick() {
+      const users = getUsers();
+      const quickDiv = document.getElementById('userQuick');
+      quickDiv.innerHTML = '';
+      // Add default users if none exist
+      if (Object.keys(users).length === 0) {
+        ['user1','user2','user3','bala'].forEach(u => {
+          users[u] = { followers: [], following: [] };
+        });
+        setUsers(users);
+      }
+      Object.keys(users).forEach(u => {
+        const btn = document.createElement('button');
+        btn.textContent = u;
+        btn.onclick = () => createUser(u);
+        if (getCurrentUser() === u) {
+          btn.style.background = '#6366f1';
+          btn.style.color = '#fff';
+          btn.style.border = '1.5px solid #6366f1';
+        }
+        quickDiv.appendChild(btn);
+      });
+    }
+    function renderUserSelect() {
+      const users = getUsers();
+      const sel = document.getElementById('userSelect');
+      const current = getCurrentUser();
+      sel.innerHTML = '<option value="">Select user...</option>';
+      Object.keys(users).forEach(u => {
+        const opt = document.createElement('option');
+        opt.value = u;
+        opt.textContent = u;
+        if (current === u) opt.selected = true;
+        sel.appendChild(opt);
+      });
+    }
+
+    // --- Initial render ---
+    renderUserQuick();
+    renderUserSelect();
+    renderCurrentUser();
+    renderPosts();
+
+    // --- Modal close on background click ---
+    document.getElementById('profileModal').onclick = function(e) {
+      if (e.target === this) {
+        closeProfile();
+      }
+    }
+  </script>
+</body>
+</html>

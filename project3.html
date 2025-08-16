@@ -1,0 +1,202 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Project Management Tool</title>
+  <style>
+    body { font-family: 'Segoe UI', Arial, sans-serif; margin: 30px; background: #f4f8fb; }
+    h1 { color: #2d7a2d; }
+    h2 { color: #1a4d8f; }
+    .container { max-width: 900px; margin: auto; }
+    .project, .task { background: #fff; border-radius: 10px; padding: 18px; margin-bottom: 24px; box-shadow: 0 4px 16px #0002; }
+    .project { border-left: 6px solid #2d7a2d; }
+    .task { margin-left: 30px; border-left: 4px solid #1a4d8f; }
+    .comment { margin-left: 50px; font-size: 0.97em; color: #333; background: #f0f4f8; border-radius: 6px; padding: 6px 10px; margin-top: 6px; }
+    button { margin-top: 8px; background: #2d7a2d; color: #fff; border: none; border-radius: 5px; padding: 7px 14px; cursor: pointer; transition: background 0.2s; }
+    button:hover { background: #1a4d8f; }
+    input, textarea, select { margin: 4px 0; width: 100%; border-radius: 5px; border: 1px solid #bbb; padding: 7px; font-size: 1em; }
+    textarea { resize: vertical; }
+    .task-header { display: flex; justify-content: space-between; align-items: center; }
+    .task-meta { font-size: 0.9em; color: #888; }
+    .delete-btn { background: #e74c3c; margin-left: 10px; }
+    .delete-btn:hover { background: #c0392b; }
+    .assign-select { width: auto; display: inline-block; margin-left: 10px; }
+    .user-badge { background: #1a4d8f; color: #fff; border-radius: 12px; padding: 2px 10px; font-size: 0.9em; margin-left: 8px; }
+    .board { display: flex; gap: 30px; }
+    .project-board { flex: 1; }
+    .status-col { background: #eaf3fa; border-radius: 8px; padding: 10px; min-height: 120px; margin-bottom: 10px; }
+    .status-title { font-weight: bold; color: #1a4d8f; margin-bottom: 8px; }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <h1>✅ Project Management Tool</h1>
+    <div>
+      <h2>Create Project</h2>
+      <input id="projectName" placeholder="Project name">
+      <button onclick="addProject()">Add Project</button>
+    </div>
+    <div style="margin-top:20px;">
+      <h2>Users</h2>
+      <input id="userName" placeholder="Add user (for assignment)">
+      <button onclick="addUser()">Add User</button>
+      <div id="userList"></div>
+    </div>
+    <div id="projects"></div>
+  </div>
+  <script>
+    let projects = [];
+    let users = [];
+
+    function renderUsers() {
+      const userList = document.getElementById('userList');
+      userList.innerHTML = users.map(u => `<span class="user-badge">${u}</span>`).join(' ');
+    }
+
+    function render() {
+      const projectsDiv = document.getElementById('projects');
+      projectsDiv.innerHTML = '';
+      projects.forEach((project, pIdx) => {
+        const projDiv = document.createElement('div');
+        projDiv.className = 'project';
+        projDiv.innerHTML = `
+          <div style="display:flex;justify-content:space-between;align-items:center;">
+            <b>${project.name}</b>
+            <button class="delete-btn" onclick="deleteProject(${pIdx})">Delete Project</button>
+          </div>
+          <div>
+            <input placeholder="Task name" id="taskName${pIdx}">
+            <select id="taskAssign${pIdx}" class="assign-select">
+              <option value="">Assign to...</option>
+              ${users.map(u => `<option value="${u}">${u}</option>`).join('')}
+            </select>
+            <select id="taskStatus${pIdx}" class="assign-select">
+              <option value="To Do">To Do</option>
+              <option value="In Progress">In Progress</option>
+              <option value="Done">Done</option>
+            </select>
+            <button onclick="addTask(${pIdx})">Add Task</button>
+          </div>
+          <div class="board">
+            ${['To Do','In Progress','Done'].map(status => `
+              <div class="project-board">
+                <div class="status-col">
+                  <div class="status-title">${status}</div>
+                  <div id="tasks${pIdx}_${status.replace(/ /g,'')}"></div>
+                </div>
+              </div>
+            `).join('')}
+          </div>
+        `;
+        projectsDiv.appendChild(projDiv);
+
+        // Render tasks by status
+        ['To Do','In Progress','Done'].forEach(status => {
+          const col = projDiv.querySelector(`#tasks${pIdx}_${status.replace(/ /g,'')}`);
+          project.tasks.filter(t => t.status === status).forEach((task, tIdx) => {
+            const taskDiv = document.createElement('div');
+            taskDiv.className = 'task';
+            taskDiv.innerHTML = `
+              <div class="task-header">
+                <span><b>${task.name}</b>
+                  ${task.assigned ? `<span class="user-badge">${task.assigned}</span>` : ''}
+                </span>
+                <span>
+                  <select onchange="changeTaskStatus(${pIdx},${tIdx},this.value)">
+                    ${['To Do','In Progress','Done'].map(s => `<option value="${s}"${task.status===s?' selected':''}>${s}</option>`).join('')}
+                  </select>
+                  <button class="delete-btn" onclick="deleteTask(${pIdx},${tIdx})">Delete</button>
+                </span>
+              </div>
+              <div class="task-meta">Created: ${task.created}</div>
+              <div>
+                <textarea placeholder="Add comment" id="comment${pIdx}_${tIdx}"></textarea>
+                <button onclick="addComment(${pIdx},${tIdx})">Comment</button>
+              </div>
+            `;
+            task.comments.forEach(comment => {
+              const commentDiv = document.createElement('div');
+              commentDiv.className = 'comment';
+              commentDiv.textContent = comment;
+              taskDiv.appendChild(commentDiv);
+            });
+            col.appendChild(taskDiv);
+          });
+        });
+      });
+      renderUsers();
+    }
+
+    function addProject() {
+      const name = document.getElementById('projectName').value.trim();
+      if (name) {
+        projects.push({ name, tasks: [] });
+        document.getElementById('projectName').value = '';
+        render();
+      }
+    }
+
+    function deleteProject(pIdx) {
+      if (confirm('Delete this project?')) {
+        projects.splice(pIdx, 1);
+        render();
+      }
+    }
+
+    function addUser() {
+      const name = document.getElementById('userName').value.trim();
+      if (name && !users.includes(name)) {
+        users.push(name);
+        document.getElementById('userName').value = '';
+        renderUsers();
+        render();
+      }
+    }
+
+    function addTask(pIdx) {
+      const input = document.getElementById(`taskName${pIdx}`);
+      const assignSel = document.getElementById(`taskAssign${pIdx}`);
+      const statusSel = document.getElementById(`taskStatus${pIdx}`);
+      const name = input.value.trim();
+      const assigned = assignSel.value;
+      const status = statusSel.value;
+      if (name) {
+        projects[pIdx].tasks.push({
+          name,
+          assigned: assigned || null,
+          status: status,
+          comments: [],
+          created: new Date().toLocaleString()
+        });
+        input.value = '';
+        assignSel.value = '';
+        statusSel.value = 'To Do';
+        render();
+      }
+    }
+
+    function deleteTask(pIdx, tIdx) {
+      if (confirm('Delete this task?')) {
+        projects[pIdx].tasks.splice(tIdx, 1);
+        render();
+      }
+    }
+
+    function addComment(pIdx, tIdx) {
+      const textarea = document.getElementById(`comment${pIdx}_${tIdx}`);
+      const comment = textarea.value.trim();
+      if (comment) {
+        projects[pIdx].tasks[tIdx].comments.push(comment);
+        textarea.value = '';
+        render();
+      }
+    }
+
+    function changeTaskStatus(pIdx, tIdx, status) {
+      projects[pIdx].tasks[tIdx].status = status;
+      render();
+    }
+    render();
+  </script>
+</body>
+</html>
